@@ -41,7 +41,6 @@ void updateMotion(GRAVOBJ* obj1, GRAVOBJ* obj2)
 		obj1->vy += forceVector.y * accel * deltaTime;
 	}
 	
-	// deltaPos = {velocity.x * deltaTime, velocity.y * deltaTime};
 	obj1->x += obj1->vx * deltaTime;
 	obj1->y += obj1->vy * deltaTime;
 }
