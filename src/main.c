@@ -7,9 +7,43 @@
 
 #define G 100
 
+typedef struct gravObj {
+	float x;
+	float y;
+	float vx;
+	float vy;
+	float radius;
+	float mass;
+} GRAVOBJ;
+
 float gravForce(float m1, float m2, float r) 
 {
-		return (G * m1 * m2)/(r * r);
+	return (G * m1 * m2)/(r * r);
+}
+
+void updateMotion(GRAVOBJ* obj1, GRAVOBJ* obj2)
+{
+	float dx = obj2->x - obj1->x;
+	float dy = obj2->y - obj1->y;
+	float radius = sqrt(dx * dx + dy * dy);
+	Vector2 forceVector = {0, 0};
+	float accel = 0;
+
+	float deltaTime = GetFrameTime();
+
+	// grav accel
+	if (radius >= 100.0f) 
+	{
+		forceVector.x = dx / radius;
+		forceVector.y = dy / radius;
+		accel = gravForce(obj1->mass, obj2->mass, radius) / obj1->mass;
+		obj1->vx += forceVector.x * accel * deltaTime;
+		obj1->vy += forceVector.y * accel * deltaTime;
+	}
+	
+	// deltaPos = {velocity.x * deltaTime, velocity.y * deltaTime};
+	obj1->x += obj1->vx * deltaTime;
+	obj1->y += obj1->vy * deltaTime;
 }
 
 int main ()
@@ -28,13 +62,11 @@ int main ()
 	Vector2 velocity = {0,0};
 	
 	// TODO: change this to a struct typedef with mass included
-	Rectangle player = {(float)screenWidth/4,(float)screenHeight/4, 40,40};
-	Rectangle planet = {(float)screenWidth/2,(float)screenHeight/2, 40,40};
+	GRAVOBJ player = {(float)screenWidth/4,(float)screenHeight/4, 40, 10, 0, 0};
+	GRAVOBJ planet = {(float)screenWidth/2,(float)screenHeight/2, 40, 100000, 0 , 0};
 
 	float radius = 0;
 	float accel = 0;
-	float m1 = 10;
-	float m2 = 100000;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 
@@ -50,39 +82,14 @@ int main ()
         // Update
         //----------------------------------------------------------------------------------
 		rotation += 0.2f;
-		float dx = planet.x - player.x;
-		float dy = planet.y - player.y;
-		radius = sqrt(dx * dx + dy * dy);
-		Vector2 forceVector = { (planet.x - player.x)/radius, (planet.y - player.y)/radius};
 
-		float deltaTime = GetFrameTime();
+		updateMotion(&player, &planet);
 
-		if (IsKeyDown(KEY_RIGHT)) velocity.x += 2.0f;
-        if (IsKeyDown(KEY_LEFT)) velocity.x -= 2.0f;
-        if (IsKeyDown(KEY_UP)) velocity.y -= 2.0f;
-        if (IsKeyDown(KEY_DOWN)) velocity.y += 2.0f;
+		if (IsKeyDown(KEY_RIGHT)) player.vx += 2.0f;
+        if (IsKeyDown(KEY_LEFT)) player.vx -= 2.0f;
+        if (IsKeyDown(KEY_UP)) player.vy -= 2.0f;
+        if (IsKeyDown(KEY_DOWN)) player.vy += 2.0f;
 		
-		// grav accel
-		if (radius >= 100) 
-		{
-			accel = gravForce(m1, m2, radius) / m1;
-			velocity.x += forceVector.x * accel * deltaTime;
-			velocity.y += forceVector.y * accel * deltaTime;
-		}
-		
-		player.x += velocity.x * deltaTime;
-		player.y += velocity.y * deltaTime;
-		
-		// Debug prints
-		// printf("radius");
-		// printf("%f \n", radius);
-
-		// printf("accel");
-		// printf("%f \n", accel);
-
-		// printf("vel");
-		// printf("%f \n", velocity.x);
-		// printf("%f \n", velocity.y);
         //----------------------------------------------------------------------------------
 
         // Draw
